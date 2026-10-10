@@ -1,12 +1,13 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { stripe } from "@/lib/stripe";
+import { getStripe } from "@/lib/stripe";
 
 export const runtime = "nodejs";
 
 // Body: { plan: "home_pass", property_id, return_to } or { plan: "landlord", return_to }
 export async function POST(req: Request) {
+  const stripe = getStripe();
   const supabase = await createClient();
   const {
     data: { user },

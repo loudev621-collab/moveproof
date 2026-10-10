@@ -1,11 +1,12 @@
 import type Stripe from "stripe";
-import { stripe } from "@/lib/stripe";
+import { getStripe } from "@/lib/stripe";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 export const runtime = "nodejs";
 
 // Stripe calls this. The signature check rejects anything not genuinely from Stripe.
 export async function POST(req: Request) {
+  const stripe = getStripe();
   const body = await req.text();
   const signature = req.headers.get("stripe-signature") ?? "";
 
