@@ -5,10 +5,16 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { compressPhoto, sha256Hex } from "@/lib/browser";
 import { KIND_LABELS } from "@/lib/format";
+import { AB2801_STEPS, isCalifornia } from "@/lib/california";
+
+const RENTER_TIPS: Record<string, string> = {
+  move_in: "On move-in day, before you unpack.",
+  move_out: "After you clean, before you hand back the keys.",
+};
 
 type Room = { id: string; name: string; position: number; condition: string | null; notes: string | null };
 type Photo = { id: string; room_id: string; storage_path: string; caption: string | null; uploaded_at?: string; preview: string | null; saving?: boolean; failed?: boolean };
-type Walk = { id: string; kind: string; other_party_name: string | null; notes: string | null; properties: { nickname: string } | null };
+type Walk = { id: string; kind: string; other_party_name: string | null; notes: string | null; properties: { nickname: string; state: string; role: string } | null };
 
 export default function Capture({ userId, walkthrough, initialRooms, initialPhotos }: {
   userId: string; walkthrough: Walk; initialRooms: Room[]; initialPhotos: Photo[];
@@ -24,6 +30,10 @@ export default function Capture({ userId, walkthrough, initialRooms, initialPhot
   const [error, setError] = useState<string | null>(null);
 
   const pendingCount = photos.filter((p) => p.saving).length;
+  // Landlords see the AB 2801 timing (their legal duty). Renters see when their own photos help most.
+  const landlord = walkthrough.properties?.role === "landlord";
+  const step = landlord && isCalifornia(walkthrough.properties?.state) ? AB2801_STEPS.find((s) => s.kind === walkthrough.kind) : undefined;
+  const renterTip = !landlord ? RENTER_TIPS[walkthrough.kind] : undefined;
 
   async function addPhotos(roomId: string, list: FileList | null) {
     if (!list) return;
@@ -96,6 +106,16 @@ export default function Capture({ userId, walkthrough, initialRooms, initialPhot
       <p className="text-sm text-soft">{walkthrough.properties?.nickname}</p>
       <h1 className="text-2xl font-bold">{KIND_LABELS[walkthrough.kind]} walkthrough</h1>
       <p className="mt-1 text-soft">Photograph each room: walls, floors, appliances, and anything already damaged. Rooms, not people.</p>
+      {step && (
+        <p className="mt-3 border-l-4 border-tape bg-card p-3 text-sm">
+          <span className="font-semibold">California AB 2801 timing:</span> {step.when}.
+        </p>
+      )}
+      {renterTip && (
+        <p className="mt-3 border-l-4 border-tape bg-card p-3 text-sm">
+          <span className="font-semibold">Best time:</span> {renterTip}
+        </p>
+      )}
 
       <ul className="mt-6 space-y-3">
         {rooms.map((room) => {

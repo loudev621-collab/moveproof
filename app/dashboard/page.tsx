@@ -31,7 +31,8 @@ export default async function Dashboard() {
                   <p className="text-sm text-soft">{address(h)}</p>
                 </div>
                 <span className="text-sm text-soft">
-                  {h.walkthroughs?.[0]?.count ?? 0} walkthroughs{h.paid ? ", Home Pass" : ""}
+                  {h.walkthroughs?.[0]?.count ?? 0} walkthroughs
+                  {h.role === "landlord" ? ", landlord (free)" : h.paid ? ", Move Pass" : ""}
                 </span>
               </Link>
             </li>

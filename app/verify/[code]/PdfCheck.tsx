@@ -27,7 +27,7 @@ export default function PdfCheck({ expected }: { expected: string }) {
         <input type="file" accept="application/pdf" className="sr-only" onChange={(e) => check(e.target.files?.[0])} />
       </label>
       {result === "match" && (
-        <p className="mt-4 border-l-4 border-ok bg-card p-4 font-semibold text-ok">This PDF is unchanged since MoveProof created it.</p>
+        <p className="mt-4 border-l-4 border-ok bg-card p-4 font-semibold text-ok">This PDF is unchanged since Doorstamp created it.</p>
       )}
       {result === "differs" && (
         <p className="mt-4 border-l-4 border-bad bg-card p-4 font-semibold text-bad">

@@ -10,7 +10,7 @@ export default async function VerifyPage({ params }: { params: Promise<{ code: s
 
   return (
     <div className="mx-auto max-w-xl px-5 py-14">
-      <h1 className="text-3xl font-bold">Check a MoveProof report</h1>
+      <h1 className="text-3xl font-bold">Check a Doorstamp PDF</h1>
       <p className="mt-2 font-mono text-sm text-soft">Code {decodeURIComponent(code).toUpperCase()}</p>
       {!report ? (
         <p className="mt-8 border border-line bg-card p-5">
@@ -27,7 +27,7 @@ export default async function VerifyPage({ params }: { params: Promise<{ code: s
         </>
       )}
       <p className="mt-10 text-sm text-soft">
-        This page confirms a PDF is the same file MoveProof created. It doesn&apos;t judge what the photos show.
+        This page confirms a PDF is the same file Doorstamp created. It doesn&apos;t judge what the photos show.
       </p>
     </div>
   );

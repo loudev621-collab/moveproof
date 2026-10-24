@@ -4,7 +4,8 @@ import { PDFDocument, StandardFonts, rgb, type PDFFont, type PDFPage } from "pdf
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { canDownload } from "@/lib/access";
-import { KIND_LABELS, CONDITION_LABELS, address } from "@/lib/format";
+import { CONDITION_LABELS, address, recordTitle } from "@/lib/format";
+import { AB2801_STEPS, isCalifornia } from "@/lib/california";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -14,7 +15,7 @@ type Photo = { id: string; room_id: string; storage_path: string; sha256: string
 
 const PAGE_W = 612, PAGE_H = 792, MARGIN = 50;
 const INK = rgb(0.09, 0.13, 0.16), SOFT = rgb(0.35, 0.39, 0.43), BAD = rgb(0.7, 0.14, 0.1);
-const TZ = process.env.REPORT_TIMEZONE || "UTC";
+const TZ = process.env.REPORT_TIMEZONE || "America/Los_Angeles";
 
 // Standard PDF fonts only cover basic Latin characters.
 function clean(s: string | null | undefined) {
@@ -69,7 +70,7 @@ export async function POST(req: Request) {
   if (walk.status !== "completed") return NextResponse.json({ error: "Finish the walkthrough first." }, { status: 409 });
 
   const { data: profile } = await db.from("profiles").select("*").eq("id", user.id).single();
-  if (!canDownload(profile, walk.properties)) return NextResponse.json({ error: "Payment needed." }, { status: 402 });
+  if (!canDownload(walk.properties)) return NextResponse.json({ error: "Payment needed." }, { status: 402 });
 
   const { data: rooms } = await db.from("rooms").select("id, name, condition, notes").eq("walkthrough_id", walk.id).order("position");
   const { data: photoRows } = await db
@@ -101,8 +102,11 @@ export async function POST(req: Request) {
   const code = makeCode();
   const site = process.env.NEXT_PUBLIC_SITE_URL!;
   const pdf = await PDFDocument.create();
-  pdf.setTitle(`${KIND_LABELS[walk.kind]} condition report ${code}`);
-  pdf.setCreator("MoveProof");
+  const home = walk.properties;
+  const title = recordTitle(walk.kind, home.state);
+  const ca = isCalifornia(home.state);
+  pdf.setTitle(`${title} ${code}`);
+  pdf.setCreator("Doorstamp");
   const regular = await pdf.embedFont(StandardFonts.Helvetica);
   const bold = await pdf.embedFont(StandardFonts.HelveticaBold);
   const mono = await pdf.embedFont(StandardFonts.Courier);
@@ -120,8 +124,7 @@ export async function POST(req: Request) {
   const gap = (n = 10) => { y -= n; };
 
   // Cover page
-  const home = walk.properties;
-  text(`${KIND_LABELS[walk.kind]} condition report`, 22, bold);
+  text(title, ca ? 20 : 22, bold);
   gap(6);
   text(address(home), 13);
   gap(14);
@@ -134,13 +137,22 @@ export async function POST(req: Request) {
   text(`Verification code: ${code}`, 14, bold);
   text(`Check this PDF is unchanged at ${site}/verify/${code}`, 11, regular, SOFT);
   gap(14);
+  if (ca) {
+    text("California AB 2801 photo steps (Civil Code \u00a71950.5)", 12, bold);
+    for (const s of AB2801_STEPS) {
+      const mark = s.kind === walk.kind ? "[This record]" : "[Separate record]";
+      text(`${mark} ${s.label}: ${s.when}. ${s.since}.`, 10, s.kind === walk.kind ? bold : regular, s.kind === walk.kind ? INK : SOFT);
+    }
+    text("Plain-language summary for reference only. It is not legal advice.", 9, regular, SOFT);
+    gap(14);
+  }
   text("How this report was made", 12, bold);
   text(
     "Each photo was given a SHA-256 fingerprint on the user's device and stamped with our server's clock when it was uploaded. " +
       "When the walkthrough was locked, its rooms and photos could no longer be edited or deleted. " +
       "When this report was created, every photo was downloaded again and its fingerprint compared with the one saved at upload. " +
       "Upload times show when each photo reached our servers, not necessarily when it was taken. " +
-      "This report is a record of the photos and notes the user provided. It is not legal advice and does not decide any dispute.",
+      "This report is a record of the photos and notes the user provided. It is not legal advice and does not decide any disagreement.",
     10, regular, SOFT
   );
   if (walk.notes) { gap(10); text("Notes", 12, bold); text(walk.notes, 10); }
@@ -179,7 +191,7 @@ export async function POST(req: Request) {
   // Footer on every page
   const pages = pdf.getPages();
   pages.forEach((pg, i) =>
-    pg.drawText(clean(`Verify: ${site}/verify/${code}    Page ${i + 1} of ${pages.length}`), {
+    pg.drawText(clean(`Doorstamp    ${ca ? "California AB 2801 record    " : ""}Verify: ${site}/verify/${code}    Page ${i + 1} of ${pages.length}`), {
       x: MARGIN, y: 24, size: 8, font: regular, color: SOFT,
     })
   );
@@ -195,6 +207,6 @@ export async function POST(req: Request) {
     walkthrough_id: walk.id, owner_id: user.id, verify_code: code, pdf_path: path, pdf_sha256: pdfSha, photo_count: photos.length,
   });
 
-  const { data: signed } = await db.storage.from("reports").createSignedUrl(path, 600, { download: `report-${code}.pdf` });
+  const { data: signed } = await db.storage.from("reports").createSignedUrl(path, 600, { download: `doorstamp-${code}.pdf` });
   return NextResponse.json({ url: signed?.signedUrl, verify_code: code });
 }

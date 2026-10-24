@@ -12,7 +12,7 @@ export default async function Header() {
       <nav className="mx-auto flex max-w-5xl items-center justify-between gap-4 px-5 py-4">
         <Link href="/" className="flex items-center gap-2 text-lg font-bold tracking-tight">
           <span className="inline-block h-4 w-6 -rotate-6 bg-tape" aria-hidden />
-          MoveProof
+          Doorstamp
         </Link>
         <div className="flex items-center gap-5 text-sm">
           <Link href="/#pricing" className="hidden sm:inline">Pricing</Link>

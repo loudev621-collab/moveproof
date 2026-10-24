@@ -1,6 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
+// Pages that need sign-in. Share links (/r/...) and /verify stay public on purpose.
 const PROTECTED = ["/dashboard", "/properties", "/walkthrough", "/account"];
 
 export async function updateSession(request: NextRequest) {
@@ -31,7 +32,8 @@ export async function updateSession(request: NextRequest) {
   if (!user && PROTECTED.some((p) => path.startsWith(p))) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
-    url.search = `?next=${encodeURIComponent(path)}`;
+    // Keep the query too, so links like /properties/new?role=landlord survive sign-in.
+    url.search = `?next=${encodeURIComponent(path + request.nextUrl.search)}`;
     return NextResponse.redirect(url);
   }
   return response;

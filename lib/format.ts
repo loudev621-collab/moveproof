@@ -1,8 +1,18 @@
+import { isCalifornia } from "./california";
+
 export const KIND_LABELS: Record<string, string> = {
   move_in: "Move-in",
   move_out: "Move-out",
+  after_repairs: "After-repair",
   other: "Walkthrough",
 };
+
+// The title used on the report page, share page and PDF.
+// California homes get "California AB 2801 Move-in Photo Record".
+export function recordTitle(kind: string, state: string | null | undefined) {
+  const base = `${KIND_LABELS[kind] ?? "Walkthrough"} Photo Record`;
+  return isCalifornia(state) ? `California AB 2801 ${base}` : base;
+}
 
 export const CONDITION_LABELS: Record<string, string> = {
   good: "Good",

@@ -2,8 +2,10 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { canDownload } from "@/lib/access";
-import { KIND_LABELS, address, when } from "@/lib/format";
+import { address, recordTitle, when } from "@/lib/format";
+import { shareUrl } from "@/lib/share";
 import ReportActions from "./ReportActions";
+import ShareLinks from "./ShareLinks";
 
 export default async function ReportPage({
   params,
@@ -23,34 +25,39 @@ export default async function ReportPage({
   if (!walk || !user) notFound();
   if (walk.status !== "completed") redirect(`/walkthrough/${id}`);
 
-  const { data: profile } = await supabase.from("profiles").select("plan, plan_status").eq("id", user.id).single();
   const { data: rooms } = await supabase.from("rooms").select("id, name, photos(count)").eq("walkthrough_id", id).order("position");
   const { data: reports } = await supabase
     .from("reports")
     .select("id, verify_code, pdf_path, generated_at")
     .eq("walkthrough_id", id)
     .order("generated_at", { ascending: false });
+  const { data: shares } = await supabase
+    .from("shares")
+    .select("id, token, created_at, revoked_at, first_viewed_at, view_count, acknowledged_at, ack_name, ack_note")
+    .eq("walkthrough_id", id)
+    .order("created_at", { ascending: false });
 
   const links = await Promise.all(
     (reports ?? []).map(async (r) => {
-      const { data } = await supabase.storage.from("reports").createSignedUrl(r.pdf_path, 600, { download: `report-${r.verify_code}.pdf` });
+      const { data } = await supabase.storage.from("reports").createSignedUrl(r.pdf_path, 600, { download: `doorstamp-${r.verify_code}.pdf` });
       return { ...r, url: data?.signedUrl ?? null };
     })
   );
 
-  const allowed = canDownload(profile, walk.properties);
+  const home = walk.properties;
+  const allowed = canDownload(home);
   const totalPhotos = (rooms ?? []).reduce((n, r) => n + (r.photos?.[0]?.count ?? 0), 0);
 
   return (
     <div className="mx-auto max-w-2xl px-5 py-12">
-      <Link href={`/properties/${walk.property_id}`} className="text-sm underline">{walk.properties.nickname}</Link>
-      <h1 className="mt-2 text-3xl font-bold">{KIND_LABELS[walk.kind]} report</h1>
-      <p className="text-soft">{address(walk.properties)}</p>
+      <Link href={`/properties/${walk.property_id}`} className="text-sm underline">{home.nickname}</Link>
+      <h1 className="mt-2 text-3xl font-bold">{recordTitle(walk.kind, home.state)}</h1>
+      <p className="text-soft">{address(home)}</p>
       <p className="mt-3 text-sm font-semibold text-ok">Locked {when(walk.completed_at)}. Nothing in this walkthrough can change.</p>
 
       {paid && !allowed && (
         <p className="mt-6 border border-line bg-card p-4 text-sm">
-          Payment received. It can take a few seconds to unlock; refresh this page if the button doesn&apos;t appear.
+          Payment received. It can take a few seconds to unlock; refresh this page if the buttons don&apos;t appear.
         </p>
       )}
 
@@ -68,17 +75,19 @@ export default async function ReportPage({
       </ul>
 
       <div className="mt-8">
-        <ReportActions
-          walkthroughId={id}
-          propertyId={walk.property_id}
-          allowed={allowed}
-          role={walk.properties.role}
-        />
+        <ReportActions walkthroughId={id} propertyId={walk.property_id} allowed={allowed} />
       </div>
+
+      {allowed && (
+        <ShareLinks
+          walkthroughId={id}
+          shares={(shares ?? []).map((s) => ({ ...s, url: shareUrl(s.token) }))}
+        />
+      )}
 
       {links.length > 0 && (
         <section className="mt-10">
-          <h2 className="text-xl font-bold">Reports created</h2>
+          <h2 className="text-xl font-bold">PDF reports</h2>
           <ul className="mt-3 space-y-2">
             {links.map((r) => (
               <li key={r.id} className="flex items-center justify-between border border-line bg-card p-3 text-sm">
@@ -90,7 +99,7 @@ export default async function ReportPage({
             ))}
           </ul>
           <p className="mt-3 text-sm text-soft">
-            Anyone you share a report with can check it at {process.env.NEXT_PUBLIC_SITE_URL}/verify/your-code.
+            Anyone you send a PDF to can check it at {process.env.NEXT_PUBLIC_SITE_URL}/verify/your-code.
           </p>
         </section>
       )}

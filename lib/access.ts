@@ -1,8 +1,7 @@
-// Who may download a report: the home has a Home Pass, or the user has an active Landlord plan.
-export function canDownload(
-  profile: { plan: string | null; plan_status: string | null } | null,
-  property: { paid: boolean | null } | null
-) {
-  if (property?.paid) return true;
-  return profile?.plan === "landlord" && ["active", "trialing"].includes(profile.plan_status ?? "");
+// Who may create the PDF and the share link for a home:
+// - landlords: always, for free
+// - renters: once the home has a Move Pass (one payment covers move-in and move-out)
+export function canDownload(property: { role: string | null; paid: boolean | null } | null) {
+  if (!property) return false;
+  return property.role === "landlord" || !!property.paid;
 }

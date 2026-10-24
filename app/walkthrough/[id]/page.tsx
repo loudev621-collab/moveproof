@@ -9,7 +9,7 @@ export default async function WalkthroughPage({ params }: { params: Promise<{ id
     data: { user },
   } = await supabase.auth.getUser();
 
-  const { data: walk } = await supabase.from("walkthroughs").select("*, properties(nickname)").eq("id", id).maybeSingle();
+  const { data: walk } = await supabase.from("walkthroughs").select("*, properties(nickname, state, role)").eq("id", id).maybeSingle();
   if (!walk || !user) notFound();
   if (walk.status === "completed") redirect(`/walkthrough/${id}/report`);
 
