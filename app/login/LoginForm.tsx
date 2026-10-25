@@ -4,6 +4,11 @@ import { useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
+// Google and Apple buttons only show once they're turned on in Supabase
+// AND set to "on" in .env.local / Vercel. Email links always work.
+const GOOGLE_ON = process.env.NEXT_PUBLIC_AUTH_GOOGLE === "on";
+const APPLE_ON = process.env.NEXT_PUBLIC_AUTH_APPLE === "on";
+
 export default function LoginForm() {
   const params = useSearchParams();
   const next = params.get("next") ?? "/dashboard";
@@ -35,9 +40,9 @@ export default function LoginForm() {
   const button = "w-full rounded-md border border-ink bg-card px-4 py-3 font-semibold";
   return (
     <div className="mt-8 space-y-3">
-      <button className={button} onClick={() => withProvider("google")}>Continue with Google</button>
-      <button className={button} onClick={() => withProvider("apple")}>Continue with Apple</button>
-      <p className="py-2 text-center text-sm text-soft">or get a link by email</p>
+      {GOOGLE_ON && <button className={button} onClick={() => withProvider("google")}>Continue with Google</button>}
+      {APPLE_ON && <button className={button} onClick={() => withProvider("apple")}>Continue with Apple</button>}
+      {(GOOGLE_ON || APPLE_ON) && <p className="py-2 text-center text-sm text-soft">or get a link by email</p>}
       <form onSubmit={withEmail} className="space-y-3">
         <label htmlFor="email" className="block text-sm font-semibold">Email</label>
         <input
