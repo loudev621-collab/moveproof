@@ -137,19 +137,20 @@ export default async function SharedRecord({
         );
       })}
 
-      {/* Growth loop: invite the other side to make their own record */}
+      {/* Growth loop: invite the other side to make their own record.
+          "via=share" pre-fills "How did you hear about Doorstamp?" with "Sent a Doorstamp link". */}
       <section className="mt-14 border border-line bg-card p-5">
         {ownerIsLandlord ? (
           <>
             <h2 className="font-bold">Renting this home? Make your own record too.</h2>
             <p className="mt-1 text-soft">{MOVE_PASS_PRICE} once per address, move-in and move-out. {NO_APP}.</p>
-            <Link href="/properties/new" className="mt-3 inline-block font-semibold underline">Start free</Link>
+            <Link href="/properties/new?via=share" className="mt-3 inline-block font-semibold underline">Start free</Link>
           </>
         ) : (
           <>
             <h2 className="font-bold">Landlord? Doorstamp is free for you.</h2>
             <p className="mt-1 text-soft">Move-in, move-out and after-repair records for every unit. Send each tenant the link.</p>
-            <Link href="/properties/new?role=landlord" className="mt-3 inline-block font-semibold underline">Add a rental, free</Link>
+            <Link href="/properties/new?role=landlord&via=share" className="mt-3 inline-block font-semibold underline">Add a rental, free</Link>
           </>
         )}
       </section>

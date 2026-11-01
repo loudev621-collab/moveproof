@@ -2,6 +2,12 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { MOVE_PASS_PRICE } from "@/lib/brand";
 
+const HEARD_FROM = [
+  "TikTok", "Instagram", "Facebook", "Reddit", "Google search",
+  "Friend or family", "Sent a Doorstamp link", "School or university",
+  "Landlord group or forum", "Other",
+];
+
 async function createHome(formData: FormData) {
   "use server";
   const supabase = await createClient();
@@ -22,6 +28,7 @@ async function createHome(formData: FormData) {
       state: get("state").toUpperCase().slice(0, 2),
       zip: get("zip"),
       role: get("role") === "landlord" ? "landlord" : "renter",
+            heard_from: HEARD_FROM.includes(get("heard_from")) ? get("heard_from") : null,
     })
     .select("id")
     .single();
@@ -29,8 +36,8 @@ async function createHome(formData: FormData) {
   redirect(`/properties/${data.id}`);
 }
 
-export default async function NewHome({ searchParams }: { searchParams: Promise<{ role?: string }> }) {
-  const { role } = await searchParams;
+export default async function NewHome({ searchParams }: { searchParams: Promise<{ role?: string; via?: string }> }) {
+  const { role, via } = await searchParams;
   const landlord = role === "landlord";
   const field = "mt-1 w-full rounded-md border border-line bg-card px-3 py-3";
   return (
@@ -65,6 +72,13 @@ export default async function NewHome({ searchParams }: { searchParams: Promise<
           <label className="block font-semibold">State<input name="state" required maxLength={2} defaultValue="CA" autoComplete="address-level1" className={field} /></label>
           <label className="block font-semibold">ZIP<input name="zip" required inputMode="numeric" maxLength={10} autoComplete="postal-code" className={field} /></label>
         </div>
+                <label className="block font-semibold">
+          How did you hear about Doorstamp? <span className="font-normal text-soft">(optional)</span>
+          <select name="heard_from" defaultValue={via === "share" ? "Sent a Doorstamp link" : ""} className={field}>
+            <option value="">Choose one</option>
+            {HEARD_FROM.map((h) => <option key={h} value={h}>{h}</option>)}
+          </select>
+        </label>
         <p className="text-sm text-soft">California homes get records titled for AB 2801. The role can&apos;t be changed later and is printed on every record.</p>
         <button className="w-full rounded-md bg-ink px-4 py-3.5 font-semibold text-card">Save home</button>
       </form>
