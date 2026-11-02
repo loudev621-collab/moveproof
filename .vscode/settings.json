@@ -1,4 +1,9 @@
 {
   "editor.formatOnSave": false,
-  "files.associations": { "*.css": "tailwindcss" }
+  "files.associations": {
+    "*.css": "tailwindcss"
+  },
+  "cSpell.words": [
+    "Doorstamp"
+  ]
 }
