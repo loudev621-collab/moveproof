@@ -1,7 +1,10 @@
 import { AB2801_URL } from "@/lib/california";
 
+const SUPPORT_EMAIL = "support@doorstamp.com";
+
 // DRAFT TEXT: have an attorney review before launch.
 export default function LegalPage() {
+  const email = <a href={`mailto:${SUPPORT_EMAIL}`} className="underline">{SUPPORT_EMAIL}</a>;
   return (
     <article className="mx-auto max-w-2xl space-y-8 px-5 py-12">
       <h1 className="text-3xl font-bold">Terms, privacy and what records show</h1>
@@ -41,16 +44,21 @@ export default function LegalPage() {
         <h2 className="text-xl font-bold">Locked walkthroughs</h2>
         <p className="mt-2">
           After you lock a walkthrough, its photos and notes cannot be edited or deleted. You can ask us to
-          delete your account; records you have already shared remain with the people you sent them to.
+          delete your account by emailing {email}; records you have already shared remain with the people you
+          sent them to.
         </p>
       </section>
       <section>
         <h2 className="text-xl font-bold">Payments and refunds</h2>
         <p className="mt-2">
           The Move Pass is a one-time payment for one address. It covers that home&apos;s move-in and move-out
-          records, PDFs and share links. There is no subscription. Landlord accounts are free. Contact us within
+          records, PDFs and share links. There is no subscription. Landlord accounts are free. Email {email} within
           14 days if something went wrong and we will make it right.
         </p>
+      </section>
+      <section>
+        <h2 className="text-xl font-bold">Contact</h2>
+        <p className="mt-2">Questions about these terms, your data or a payment: {email}.</p>
       </section>
       <section>
         <h2 className="text-xl font-bold">Other states</h2>

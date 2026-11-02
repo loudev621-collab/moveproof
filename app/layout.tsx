@@ -24,8 +24,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <main>{children}</main>
         <footer className="mx-auto max-w-5xl px-5 py-10 text-sm text-soft">
           <p>Doorstamp keeps records of the photos and notes you provide. It is not legal advice.</p>
-          <p className="mt-2">
-            <a href="/legal" className="underline">Terms, privacy and what reports prove</a>
+          <p className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
+            <a href="/help" className="underline">Help and contact</a>
+            <a href="/legal" className="underline">Terms, privacy and what records show</a>
           </p>
         </footer>
       </body>
